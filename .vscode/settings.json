@@ -2,10 +2,20 @@
   // 기본 파이썬 인터프리터 경로 설정 (myenv)
   "python.defaultInterpreterPath": "C:\\Users\\HB_OPERATION_NICK\\.conda\\envs\\myenv\\python.exe",
 
-  // Pylance 패키지 탐색 경로 명시 (myenv site-packages)
+  // Pylance 패키지 및 서브폴더 탐색 경로 명시
   "python.analysis.extraPaths": [
-    "C:\\Users\\HB_OPERATION_NICK\\.conda\\envs\\myenv\\Lib\\site-packages"
+    "C:\\Users\\HB_OPERATION_NICK\\.conda\\envs\\myenv\\Lib\\site-packages",
+    "C:\\Users\\HB_OPERATION_NICK\\AppData\\Roaming\\Python\\Python314\\site-packages",
+    "${workspaceFolder}/youtube_stt_service",
+    "${workspaceFolder}/gemini_35_stt_example",
+    "${workspaceFolder}/gemini_tts_example"
   ],
+
+  // Pylance 임포트 경고 무시 (환경 불일치 방지)
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportMissingImports": "none",
+    "reportMissingModuleSource": "none"
+  },
 
   // Conda 실행 파일 경로 지정 (PATH에 미등록된 경우 대비)
   "python.condaPath": "C:\\ProgramData\\miniconda3\\Scripts\\conda.exe",

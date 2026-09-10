@@ -1,7 +1,7 @@
 import os
 import re
 from typing import Callable, Optional, Dict, Any
-import yt_dlp
+import yt_dlp  # type: ignore
 
 class YouTubeDownloader:
     """YouTube 영상의 메타데이터 조회 및 오디오 스트림 다운로드를 처리하는 클래스."""
@@ -17,13 +17,14 @@ class YouTubeDownloader:
         return bool(re.search(pattern, url.strip()))
 
     @staticmethod
-    def format_duration(seconds: Optional[int]) -> str:
+    def format_duration(seconds: Optional[int | float]) -> str:
         """초 단위 재생 시간을 'MM:SS' 또는 'HH:MM:SS' 형식으로 포맷팅합니다."""
         if not seconds:
             return "00:00"
-        hours = seconds // 3600
-        minutes = (seconds % 3600) // 60
-        secs = seconds % 60
+        total_secs = int(seconds)
+        hours = total_secs // 3600
+        minutes = (total_secs % 3600) // 60
+        secs = total_secs % 60
         if hours > 0:
             return f"{hours:02d}:{minutes:02d}:{secs:02d}"
         return f"{minutes:02d}:{secs:02d}"

@@ -1,17 +1,25 @@
 import os
+import sys
 import json
 import asyncio
 from typing import AsyncGenerator
-from fastapi import FastAPI, Query, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse, FileResponse
-from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
-
-from downloader import YouTubeDownloader
-from stt_service import GeminiTranscriber, LANGUAGE_MAP, detect_language_from_text
+from fastapi import FastAPI, Query, HTTPException  # type: ignore
+from fastapi.middleware.cors import CORSMiddleware  # type: ignore
+from fastapi.responses import StreamingResponse, FileResponse  # type: ignore
+from fastapi.staticfiles import StaticFiles  # type: ignore
+from pydantic import BaseModel  # type: ignore
+import uvicorn  # type: ignore
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
+try:
+    from downloader import YouTubeDownloader
+    from stt_service import GeminiTranscriber, LANGUAGE_MAP, detect_language_from_text
+except ImportError:
+    from youtube_stt_service.downloader import YouTubeDownloader  # type: ignore
+    from youtube_stt_service.stt_service import GeminiTranscriber, LANGUAGE_MAP, detect_language_from_text  # type: ignore
 DOWNLOAD_DIR = os.path.join(BASE_DIR, "downloads")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
@@ -211,5 +219,4 @@ app.mount("/downloads", StaticFiles(directory=DOWNLOAD_DIR), name="downloads")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)

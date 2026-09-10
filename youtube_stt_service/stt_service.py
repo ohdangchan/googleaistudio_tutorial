@@ -1,9 +1,9 @@
 import os
 import re
 from typing import Generator, Dict, Any, List, Optional
-from dotenv import load_dotenv
-from google import genai
-from google.genai import types
+from dotenv import load_dotenv  # type: ignore
+from google import genai  # type: ignore
+from google.genai import types  # type: ignore
 
 load_dotenv()
 
@@ -214,10 +214,10 @@ class GeminiTranscriber:
             # 다국어 BCP-47 언어 코드 및 화자 분리/단어 타임스탬프 설정
             generate_content_config = types.GenerateContentConfig(
                 automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
-                audio_transcription_config=types.AudioTranscriptionConfig(
-                    language_codes=target_lang_codes,
-                    word_timestamp=True,
-                    diarization=True,
+                audio_transcription_config=types.AudioTranscriptionConfig(  # type: ignore
+                    language_codes=target_lang_codes,  # type: ignore
+                    word_timestamp=True,  # type: ignore
+                    diarization=True,  # type: ignore
                 ),
             )
 

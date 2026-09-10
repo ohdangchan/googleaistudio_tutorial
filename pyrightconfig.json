@@ -1,0 +1,20 @@
+{
+  "include": [
+    ".",
+    "youtube_stt_service",
+    "gemini_35_stt_example",
+    "gemini_tts_example"
+  ],
+  "venvPath": "C:/Users/HB_OPERATION_NICK/.conda/envs",
+  "venv": "myenv",
+  "pythonPath": "C:/Users/HB_OPERATION_NICK/.conda/envs/myenv/python.exe",
+  "extraPaths": [
+    "C:/Users/HB_OPERATION_NICK/.conda/envs/myenv/Lib/site-packages",
+    "C:/Users/HB_OPERATION_NICK/AppData/Roaming/Python/Python314/site-packages",
+    "./youtube_stt_service",
+    "./gemini_35_stt_example",
+    "./gemini_tts_example"
+  ],
+  "reportMissingImports": "none",
+  "reportMissingModuleSource": "none"
+}
