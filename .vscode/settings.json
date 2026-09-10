@@ -1,0 +1,34 @@
+{
+  // 기본 파이썬 인터프리터 경로 설정 (myenv)
+  "python.defaultInterpreterPath": "C:\\Users\\HB_OPERATION_NICK\\.conda\\envs\\myenv\\python.exe",
+
+  // Conda 실행 파일 경로 지정 (PATH에 미등록된 경우 대비)
+  "python.condaPath": "C:\\ProgramData\\miniconda3\\Scripts\\conda.exe",
+
+  // 터미널 생성 시 파이썬 가상환경 자동 활성화
+  "python.terminal.activateEnvironment": true,
+
+  // 기본 터미널을 CMD (myenv 자동 활성화)로 지정
+  "terminal.integrated.defaultProfile.windows": "Command Prompt (myenv)",
+
+  // 윈도우 터미널 프로필 구성
+  "terminal.integrated.profiles.windows": {
+    "Command Prompt (myenv)": {
+      "path": "C:\\Windows\\System32\\cmd.exe",
+      "args": [
+        "/K",
+        "C:\\ProgramData\\miniconda3\\condabin\\conda.bat activate myenv"
+      ],
+      "icon": "terminal-cmd"
+    },
+    "PowerShell (myenv)": {
+      "source": "PowerShell",
+      "args": [
+        "-NoExit",
+        "-Command",
+        "conda activate myenv"
+      ],
+      "icon": "terminal-powershell"
+    }
+  }
+}

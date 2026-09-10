@@ -5,6 +5,13 @@ import threading
 import time
 import uvicorn
 
+# 실행 위치에 상관없이 모듈을 정상 로드할 수 있도록 기준 경로 설정
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+os.chdir(BASE_DIR)
+
+
 def open_browser(port: int = 8000):
     time.sleep(1.5)
     webbrowser.open(f"http://127.0.0.1:{port}")
