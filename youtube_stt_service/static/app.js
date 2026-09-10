@@ -1,17 +1,19 @@
-// YouTube Audio STT Transcriber Client Script
+// YouTube Audio STT Transcriber Client Script with Multilingual Support
 document.addEventListener('DOMContentLoaded', () => {
-  // Initialize Lucide Icons
   lucide.createIcons();
 
   const form = document.getElementById('transcribe-form');
   const urlInput = document.getElementById('youtube-url');
+  const languageSelect = document.getElementById('language-select');
   const startBtn = document.getElementById('start-btn');
   const pasteBtn = document.getElementById('paste-btn');
-  const sampleBtn = document.getElementById('sample-url-btn');
+  const langPills = document.querySelectorAll('.lang-pill');
+  const sampleBtns = document.querySelectorAll('.sample-btn');
 
   const progressSection = document.getElementById('progress-section');
   const currentStatusText = document.getElementById('current-status-text');
   const stepBadge = document.getElementById('step-badge');
+  const activeLangBadge = document.getElementById('active-lang-badge');
   const spinnerIcon = document.getElementById('spinner-icon');
 
   const downloadProgressContainer = document.getElementById('download-progress-container');
@@ -32,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const transcriptContainer = document.getElementById('transcript-container');
   const transcriptPlaceholder = document.getElementById('transcript-placeholder');
   const speakersCountBadge = document.getElementById('speakers-count-badge');
+  const detectedLangPill = document.getElementById('detected-lang-pill');
 
   const copyBtn = document.getElementById('copy-transcript-btn');
   const exportTxtBtn = document.getElementById('export-txt-btn');
@@ -53,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
     { border: 'border-amber-500/40', badge: 'bg-amber-500/20 text-amber-300 border-amber-500/30', label: '화자 3' },
     { border: 'border-rose-500/40', badge: 'bg-rose-500/20 text-rose-300 border-rose-500/30', label: '화자 4' },
     { border: 'border-cyan-500/40', badge: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30', label: '화자 5' },
+    { border: 'border-purple-500/40', badge: 'bg-purple-500/20 text-purple-300 border-purple-500/30', label: '화자 6' },
   ];
   const speakerColorMap = new Map();
 
@@ -67,6 +71,30 @@ document.addEventListener('DOMContentLoaded', () => {
     return speakerColorMap.get(speakerId);
   }
 
+  // 언어 선택 동기화 (드롭다운 <-> 필 버튼)
+  function setLanguage(langCode) {
+    languageSelect.value = langCode;
+    langPills.forEach(pill => {
+      if (pill.dataset.lang === langCode) {
+        pill.classList.remove('bg-slate-800', 'text-slate-300', 'border-slate-700');
+        pill.classList.add('bg-indigo-600', 'text-white', 'border-indigo-500/40');
+      } else {
+        pill.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-500/40');
+        pill.classList.add('bg-slate-800', 'text-slate-300', 'border-slate-700');
+      }
+    });
+  }
+
+  languageSelect.addEventListener('change', () => {
+    setLanguage(languageSelect.value);
+  });
+
+  langPills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      setLanguage(pill.dataset.lang);
+    });
+  });
+
   // 클립보드 붙여넣기
   pasteBtn.addEventListener('click', async () => {
     try {
@@ -80,8 +108,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // 샘플 URL 버튼 클릭
-  sampleBtn.addEventListener('click', () => {
-    urlInput.value = sampleBtn.getAttribute('data-url');
+  sampleBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      urlInput.value = btn.dataset.url;
+      if (btn.dataset.lang) {
+        setLanguage(btn.dataset.lang);
+      }
+    });
   });
 
   // 스텝 인디케이터 상태 업데이트
@@ -113,10 +146,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const url = urlInput.value.trim();
     if (!url) return;
 
-    startTranscription(url);
+    startTranscription(url, languageSelect.value);
   });
 
-  function startTranscription(url) {
+  function startTranscription(url, lang) {
     if (eventSource) {
       eventSource.close();
     }
@@ -142,6 +175,10 @@ document.addEventListener('DOMContentLoaded', () => {
     downloadBar.style.width = '0%';
     downloadPercent.textContent = '0%';
 
+    const selectedOption = languageSelect.options[languageSelect.selectedIndex];
+    activeLangBadge.textContent = `언어: ${selectedOption ? selectedOption.text : lang}`;
+    detectedLangPill.textContent = `언어: ${selectedOption ? selectedOption.text : lang}`;
+
     updateStep(1, 'active', '영상 정보 조회 중...');
     updateStep(2, 'idle', '대기 중');
     updateStep(3, 'idle', '대기 중');
@@ -149,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentStatusText.textContent = 'YouTube 영상 정보 및 메타데이터를 확인하고 있습니다...';
 
     // SSE 스트림 연결
-    const sseUrl = `/api/stream?url=${encodeURIComponent(url)}`;
+    const sseUrl = `/api/stream?url=${encodeURIComponent(url)}&lang=${encodeURIComponent(lang)}`;
     eventSource = new EventSource(sseUrl);
 
     eventSource.addEventListener('status', (e) => {
@@ -179,6 +216,9 @@ document.addEventListener('DOMContentLoaded', () => {
       videoDuration.textContent = info.duration_str;
       if (info.thumbnail) {
         videoThumb.src = info.thumbnail;
+      }
+      if (info.suggested_lang && languageSelect.value === 'auto') {
+        detectedLangPill.textContent = `언어 추론: ${info.suggested_lang.toUpperCase()}`;
       }
       mediaCard.classList.remove('hidden');
     });
@@ -216,6 +256,10 @@ document.addEventListener('DOMContentLoaded', () => {
       spinnerIcon.setAttribute('data-lucide', 'check-circle');
       currentStatusText.textContent = `전사 완료 (총 ${data.total_speakers}명 감지됨)`;
       speakersCountBadge.textContent = `화자: ${data.total_speakers}명`;
+
+      if (data.detected_language) {
+        detectedLangPill.textContent = `언어: ${data.detected_language}`;
+      }
 
       accumulatedMarkdown = data.markdown || "";
       accumulatedPlainText = data.plain_text || "";
@@ -255,9 +299,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 실시간 텍스트 청크 추가
   function appendTranscriptChunk(chunkData) {
-    const speakerId = chunkData.speaker || "speaker";
+    const speakerId = chunkData.speaker || "spk:0";
     const text = chunkData.text || "";
-    const words = chunkData.words || [];
 
     if (transcriptPlaceholder) {
       transcriptPlaceholder.remove();
@@ -290,11 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const contentDiv = activeSpeakerBlock.querySelector('.transcript-content');
-
-    // 텍스트 추가
     contentDiv.appendChild(document.createTextNode(text));
-
-    // 자동 스크롤
     transcriptContainer.scrollTop = transcriptContainer.scrollHeight;
   }
 

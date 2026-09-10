@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from downloader import YouTubeDownloader
-from stt_service import GeminiTranscriber
+from stt_service import GeminiTranscriber, LANGUAGE_MAP, detect_language_from_text
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DOWNLOAD_DIR = os.path.join(BASE_DIR, "downloads")
@@ -20,8 +20,8 @@ os.makedirs(STATIC_DIR, exist_ok=True)
 
 app = FastAPI(
     title="YouTube Audio Downloader & Gemini STT Service",
-    description="유튜브 영상의 오디오를 다운로드하고 Gemini 3.5 Transcribe로 전사하는 웹 서비스",
-    version="1.0.0",
+    description="유튜브 영상의 오디오를 다운로드하고 Gemini 3.5 Transcribe로 다국어 전사하는 웹 서비스",
+    version="1.1.0",
 )
 
 app.add_middleware(
@@ -52,18 +52,39 @@ async def root():
         return FileResponse(index_file)
     return {"message": "YouTube STT Web Service is running."}
 
+@app.get("/api/languages")
+async def get_languages():
+    """지원하는 언어 목록 및 기본 메타데이터를 반환합니다."""
+    return {
+        "success": True,
+        "languages": [
+            {"code": k, "name": v["name"], "flag": v["flag"]}
+            for k, v in LANGUAGE_MAP.items()
+        ]
+    }
+
 @app.post("/api/info")
 async def get_video_info(req: URLRequest):
-    """비디오 URL에 대한 메타데이터를 신속하게 확인합니다."""
+    """비디오 URL에 대한 메타데이터와 추천 언어 코드를 확인합니다."""
     try:
         info = downloader.get_video_info(req.url)
-        return {"success": True, "data": info}
+        suggested_lang = detect_language_from_text(info.get("title", ""))
+        return {
+            "success": True,
+            "data": {
+                **info,
+                "suggested_lang": suggested_lang,
+            }
+        }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/api/stream")
-async def stream_transcription(url: str = Query(..., description="YouTube 비디오 URL")):
-    """Server-Sent Events(SSE)를 통해 다운로드 진행률 및 Gemini 실시간 전사 결과를 스트리밍합니다."""
+async def stream_transcription(
+    url: str = Query(..., description="YouTube 비디오 URL"),
+    lang: str = Query("auto", description="언어 코드 (ko, en, zh, ja, ru, es, fr, de, hi, vi, th, id, sea, auto)"),
+):
+    """Server-Sent Events(SSE)를 통해 다운로드 진행률 및 Gemini 다국어 실시간 전사 결과를 스트리밍합니다."""
     async def event_generator() -> AsyncGenerator[str, None]:
         loop = asyncio.get_running_loop()
         queue = asyncio.Queue()
@@ -71,15 +92,21 @@ async def stream_transcription(url: str = Query(..., description="YouTube 비디
         def sse_pack(event_name: str, payload: dict) -> str:
             return f"event: {event_name}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
 
-        # 1. 메타데이터 조회
         await queue.put(sse_pack("status", {"step": "info", "message": "유튜브 영상 정보 확인 중..."}))
 
         def run_pipeline():
             try:
                 # 1) 메타데이터 가져오기
                 info = downloader.get_video_info(url)
+                suggested_lang = detect_language_from_text(info.get("title", ""))
+                effective_lang = lang if lang != "auto" else suggested_lang
+
                 asyncio.run_coroutine_threadsafe(
-                    queue.put(sse_pack("info", info)), loop
+                    queue.put(sse_pack("info", {
+                        **info,
+                        "suggested_lang": suggested_lang,
+                        "selected_lang": lang,
+                    })), loop
                 )
 
                 # 2) 다운로드 진행률 콜백
@@ -104,13 +131,18 @@ async def stream_transcription(url: str = Query(..., description="YouTube 비디
 
                 # 3) Gemini STT 전사 시작
                 asyncio.run_coroutine_threadsafe(
-                    queue.put(sse_pack("status", {"step": "transcribing", "message": "Gemini 3.5 Transcribe 음성 인식 시작..."})), loop
+                    queue.put(sse_pack("status", {
+                        "step": "transcribing",
+                        "message": f"Gemini 3.5 Transcribe 음성 인식 시작 (선택 언어: {lang})...",
+                    })), loop
                 )
 
                 t_engine = get_transcriber()
                 stt_stream = t_engine.transcribe_stream(
                     audio_path=download_res["file_path"],
                     mime_type=download_res["mime_type"],
+                    language=lang,
+                    text_hint=info.get("title", ""),
                 )
 
                 accumulated_items = []
@@ -131,7 +163,6 @@ async def stream_transcription(url: str = Query(..., description="YouTube 비디
                             queue.put(sse_pack("status", {"step": "transcribing", "message": ev.get("message")})), loop
                         )
                     elif ev_type == "complete":
-                        # 마크다운, 플레인 텍스트, SRT 등 완성
                         plain_txt = t_engine.format_to_plain_text(accumulated_items)
                         md_txt = t_engine.format_to_markdown(accumulated_items, title=info.get("title", "YouTube 전사본"))
                         srt_txt = t_engine.format_to_srt(accumulated_items)
@@ -158,7 +189,6 @@ async def stream_transcription(url: str = Query(..., description="YouTube 비디
                     queue.put(None), loop
                 )
 
-        # 백그라운드 스레드에서 다운로드 & STT 파이프라인 가동
         loop.run_in_executor(None, run_pipeline)
 
         while True:
@@ -177,7 +207,6 @@ async def stream_transcription(url: str = Query(..., description="YouTube 비디
         },
     )
 
-# 다운로드된 오디오 및 정적 파일 마운트
 app.mount("/downloads", StaticFiles(directory=DOWNLOAD_DIR), name="downloads")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 

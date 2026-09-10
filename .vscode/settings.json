@@ -2,6 +2,11 @@
   // 기본 파이썬 인터프리터 경로 설정 (myenv)
   "python.defaultInterpreterPath": "C:\\Users\\HB_OPERATION_NICK\\.conda\\envs\\myenv\\python.exe",
 
+  // Pylance 패키지 탐색 경로 명시 (myenv site-packages)
+  "python.analysis.extraPaths": [
+    "C:\\Users\\HB_OPERATION_NICK\\.conda\\envs\\myenv\\Lib\\site-packages"
+  ],
+
   // Conda 실행 파일 경로 지정 (PATH에 미등록된 경우 대비)
   "python.condaPath": "C:\\ProgramData\\miniconda3\\Scripts\\conda.exe",
 
