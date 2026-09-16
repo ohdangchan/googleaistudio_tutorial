@@ -3,7 +3,8 @@
     ".",
     "youtube_stt_service",
     "gemini_35_stt_example",
-    "gemini_tts_example"
+    "gemini_tts_example",
+    "ai_youtube_search"
   ],
   "venvPath": "C:/Users/HB_OPERATION_NICK/.conda/envs",
   "venv": "myenv",
@@ -13,7 +14,8 @@
     "C:/Users/HB_OPERATION_NICK/AppData/Roaming/Python/Python314/site-packages",
     "./youtube_stt_service",
     "./gemini_35_stt_example",
-    "./gemini_tts_example"
+    "./gemini_tts_example",
+    "./ai_youtube_search"
   ],
   "reportMissingImports": "none",
   "reportMissingModuleSource": "none"

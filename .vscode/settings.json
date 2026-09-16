@@ -8,7 +8,8 @@
     "C:\\Users\\HB_OPERATION_NICK\\AppData\\Roaming\\Python\\Python314\\site-packages",
     "${workspaceFolder}/youtube_stt_service",
     "${workspaceFolder}/gemini_35_stt_example",
-    "${workspaceFolder}/gemini_tts_example"
+    "${workspaceFolder}/gemini_tts_example",
+    "${workspaceFolder}/ai_youtube_search"
   ],
 
   // Pylance 임포트 경고 무시 (환경 불일치 방지)

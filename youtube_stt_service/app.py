@@ -114,6 +114,7 @@ async def stream_transcription(
                         **info,
                         "suggested_lang": suggested_lang,
                         "selected_lang": lang,
+                        "effective_lang": effective_lang,
                     })), loop
                 )
 
@@ -141,7 +142,7 @@ async def stream_transcription(
                 asyncio.run_coroutine_threadsafe(
                     queue.put(sse_pack("status", {
                         "step": "transcribing",
-                        "message": f"Gemini 3.5 Transcribe 음성 인식 시작 (선택 언어: {lang})...",
+                        "message": f"Gemini 3.5 Transcribe 음성 인식 시작 (선택 언어: {lang}, 적용 언어: {effective_lang})...",
                     })), loop
                 )
 
@@ -149,7 +150,7 @@ async def stream_transcription(
                 stt_stream = t_engine.transcribe_stream(
                     audio_path=download_res["file_path"],
                     mime_type=download_res["mime_type"],
-                    language=lang,
+                    language=effective_lang,
                     text_hint=info.get("title", ""),
                 )
 
