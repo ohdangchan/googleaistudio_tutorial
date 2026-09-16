@@ -308,7 +308,7 @@ class GeminiTranscriber:
         except Exception as e:
             yield {"type": "error", "message": f"STT 전사 중 오류 발생: {str(e)}"}
         finally:
-            if uploaded_file:
+            if uploaded_file and uploaded_file.name:
                 try:
                     self.client.files.delete(name=uploaded_file.name)
                 except Exception:

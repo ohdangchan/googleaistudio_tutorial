@@ -49,6 +49,9 @@ class YouTubeDownloader:
         except Exception as e:
             raise ValueError(f"유튜브 영상 정보를 불러올 수 없습니다: {str(e)}")
 
+        if not info:
+            raise ValueError("유튜브 영상 정보를 불러올 수 없습니다.")
+
         duration = int(info.get('duration') or 0)
         minutes, seconds = divmod(duration, 60)
         hours, minutes = divmod(minutes, 60)

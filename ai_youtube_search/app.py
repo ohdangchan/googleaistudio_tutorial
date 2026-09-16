@@ -1,7 +1,7 @@
 import os
 import json
 import asyncio
-from typing import AsyncGenerator, Optional
+from typing import AsyncGenerator, Optional, Any
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, FileResponse
@@ -11,19 +11,15 @@ from pydantic import BaseModel, Field, field_validator
 import sys
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-if BASE_DIR not in sys.path:
-    sys.path.insert(0, BASE_DIR)
+PARENT_DIR = os.path.dirname(BASE_DIR)
+for p in [BASE_DIR, PARENT_DIR]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
-try:
-    from downloader import YouTubeDownloader
-    from stt_service import GeminiTranscriber
-    from qa_service import GeminiQAService
-    from csv_db import TranscriptCSVDatabase
-except ImportError:
-    from ai_youtube_search.downloader import YouTubeDownloader  # type: ignore
-    from ai_youtube_search.stt_service import GeminiTranscriber  # type: ignore
-    from ai_youtube_search.qa_service import GeminiQAService  # type: ignore
-    from ai_youtube_search.csv_db import TranscriptCSVDatabase  # type: ignore
+from ai_youtube_search.downloader import YouTubeDownloader
+from ai_youtube_search.stt_service import GeminiTranscriber
+from ai_youtube_search.qa_service import GeminiQAService
+from ai_youtube_search.csv_db import TranscriptCSVDatabase
 DOWNLOAD_DIR = os.path.join(BASE_DIR, "downloads")
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 
@@ -141,7 +137,7 @@ async def stream_transcription(url: str = Query(..., description="유튜브 영�
         loop = asyncio.get_running_loop()
         queue = asyncio.Queue()
 
-        def pack(event: str, data: dict) -> str:
+        def pack(event: str, data: Any) -> str:
             return f"event: {event}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
 
         # 2. CSV 캐시 확인
@@ -268,7 +264,7 @@ async def answer_question(req: QARequest):
         answer = get_qa_service().answer_question(
             query=req.query,
             transcript_context=req.transcript_context,
-            video_title=req.video_title,
+            video_title=req.video_title or "영상",
         )
         return {"success": True, "answer": answer}
     except ValueError as ve:
@@ -282,7 +278,7 @@ async def generate_chapters(req: ChapterRequest):
     try:
         chapters = get_qa_service().generate_smart_chapters(
             transcript_context=req.transcript_context,
-            video_title=req.video_title,
+            video_title=req.video_title or "영상",
         )
         return {"success": True, "chapters": chapters}
     except Exception as e:

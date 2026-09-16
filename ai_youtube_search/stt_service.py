@@ -168,7 +168,7 @@ class GeminiTranscriber:
         except Exception as e:
             yield {"type": "error", "message": f"음성 전사 오류: {str(e)}"}
         finally:
-            if upload_ref:
+            if upload_ref and upload_ref.name:
                 try:
                     self.client.files.delete(name=upload_ref.name)
                 except Exception:

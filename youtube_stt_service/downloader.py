@@ -48,7 +48,7 @@ class YouTubeDownloader:
                 if not info:
                     raise ValueError("영상 정보를 불러올 수 없습니다.")
 
-                video_id = info.get("id")
+                video_id = str(info.get("id") or "")
                 title = info.get("title", "제목 없음")
                 channel = info.get("uploader") or info.get("channel", "알 수 없는 채널")
                 duration = info.get("duration", 0)
