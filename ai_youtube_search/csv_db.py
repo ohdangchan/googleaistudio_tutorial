@@ -71,14 +71,14 @@ class TranscriptCSVDatabase:
         if isinstance(detected_languages, list):
             lang_str = ", ".join(detected_languages) if detected_languages else "다국어"
         else:
-            lang_str = str(detected_languages or "다국어")
+            lang_str = (detected_languages or "다국어").strip()
 
         new_entry = {
-            "video_id": str(video_id).strip(),
-            "url": str(url).strip(),
-            "title": str(title).strip(),
-            "channel": str(channel).strip(),
-            "duration_str": str(duration_str).strip(),
+            "video_id": video_id.strip(),
+            "url": url.strip(),
+            "title": title.strip(),
+            "channel": channel.strip(),
+            "duration_str": duration_str.strip(),
             "detected_languages": lang_str,
             "created_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "transcript_text": transcript_text or "",

@@ -1,9 +1,9 @@
 import os
 import re
 from typing import Generator, Dict, Any, List, Optional
-from dotenv import load_dotenv  # type: ignore
-from google import genai  # type: ignore
-from google.genai import types  # type: ignore
+from dotenv import load_dotenv
+from google import genai
+from google.genai import types
 
 load_dotenv()
 
@@ -214,10 +214,10 @@ class GeminiTranscriber:
             # 다국어 BCP-47 언어 코드 및 화자 분리/단어 타임스탬프 설정
             generate_content_config = types.GenerateContentConfig(
                 automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
-                audio_transcription_config=types.AudioTranscriptionConfig(  # type: ignore
-                    language_codes=target_lang_codes,  # type: ignore
-                    word_timestamp=True,  # type: ignore
-                    diarization=True,  # type: ignore
+                audio_transcription_config=types.AudioTranscriptionConfig(
+                    language_codes=target_lang_codes,
+                    word_timestamp=True,
+                    diarization=True,
                 ),
             )
 
@@ -366,9 +366,12 @@ class GeminiTranscriber:
         srt_entries = []
         idx = 1
 
-        def parse_offset_to_srt_time(offset_str: str) -> str:
+        def parse_offset_to_srt_time(offset: Any) -> str:
             try:
-                s = float(str(offset_str).replace("s", "").strip())
+                if isinstance(offset, (int, float)):
+                    s = float(offset)
+                else:
+                    s = float(str(offset).replace("s", "").strip())
                 hrs = int(s // 3600)
                 mins = int((s % 3600) // 60)
                 secs = int(s % 60)
